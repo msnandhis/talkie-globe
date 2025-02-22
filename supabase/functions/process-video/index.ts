@@ -42,31 +42,77 @@ serve(async (req) => {
       .update({ status: 'processing' })
       .eq('id', videoId)
 
+    // 1. Start dubbing with ElevenLabs
+    const formData = new FormData()
+    
+    // Add video URL
+    formData.append('source_url', video.stored_url)
+    formData.append('target_lang', targetLanguage)
+    formData.append('source_lang', 'auto')
+    formData.append('num_speakers', '0') // Auto-detect speakers
+    formData.append('watermark', 'false')
+    
+    console.log('Starting ElevenLabs dubbing...')
+    const dubbingResponse = await fetch('https://api.elevenlabs.io/v1/dubbing', {
+      method: 'POST',
+      headers: {
+        'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') ?? '',
+      },
+      body: formData,
+    })
+
+    if (!dubbingResponse.ok) {
+      const error = await dubbingResponse.text()
+      console.error('ElevenLabs error:', error)
+      throw new Error(`Failed to start dubbing: ${error}`)
+    }
+
+    const { dubbing_id } = await dubbingResponse.json()
+
+    // 2. Poll for dubbing completion
+    let dubbingComplete = false
+    let translatedUrl = null
+    let attempts = 0
+    const maxAttempts = 60 // 5 minutes maximum (with 5s intervals)
+
+    while (!dubbingComplete && attempts < maxAttempts) {
+      console.log(`Checking dubbing status (attempt ${attempts + 1})...`)
+      const statusResponse = await fetch(`https://api.elevenlabs.io/v1/dubbing/${dubbing_id}`, {
+        headers: {
+          'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') ?? '',
+        },
+      })
+
+      if (!statusResponse.ok) {
+        throw new Error('Failed to check dubbing status')
+      }
+
+      const status = await statusResponse.json()
+
+      if (status.status === 'done') {
+        dubbingComplete = true
+        translatedUrl = status.audio_url
+      } else if (status.status === 'failed') {
+        throw new Error('Dubbing failed: ' + status.error)
+      }
+
+      if (!dubbingComplete) {
+        await new Promise(resolve => setTimeout(resolve, 5000)) // Wait 5 seconds before next check
+        attempts++
+      }
+    }
+
+    if (!dubbingComplete) {
+      throw new Error('Dubbing timed out')
+    }
+
+    // 3. Generate summary using GPT-4
     const openai = new OpenAI({
       apiKey: Deno.env.get('OPENAI_API_KEY'),
     })
 
-    // 1. Transcribe the video
-    const transcriptionResponse = await fetch(video.stored_url)
-    const audioBlob = await transcriptionResponse.blob()
-    
-    const formData = new FormData()
-    formData.append('file', audioBlob)
-    formData.append('model', 'whisper-1')
-    
-    const transcriptionResult = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-      },
-      body: formData,
-    }).then(res => res.json())
-
-    const transcript = transcriptionResult.text
-
-    // 2. Generate summary using GPT-4
     const summaryResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -74,77 +120,20 @@ serve(async (req) => {
         },
         {
           role: "user",
-          content: `Please provide a summary of this video transcript in ${targetLanguage}:\n\n${transcript}`
+          content: `Please provide a summary of this video in ${targetLanguage}. The video is about: ${video.title}`
         }
       ],
     })
 
     const summary = summaryResponse.choices[0].message.content
 
-    // 3. Translate the transcript
-    const translationResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are a professional translator. Translate the following text to ${targetLanguage}. Maintain the original meaning and tone.`
-        },
-        {
-          role: "user",
-          content: transcript
-        }
-      ],
-    })
-
-    const translatedTranscript = translationResponse.choices[0].message.content
-
-    // 4. Generate audio from translated text
-    const audioResponse = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tts-1',
-        input: translatedTranscript,
-        voice: 'alloy',
-      }),
-    })
-
-    if (!audioResponse.ok) {
-      throw new Error('Failed to generate translated audio')
-    }
-
-    // 5. Upload translated audio to Supabase Storage
-    const audioBlob2 = await audioResponse.blob()
-    const translatedPath = `translated/${videoId}.mp3`
-
-    const { data: storageData, error: storageError } = await supabase.storage
-      .from('videos')
-      .upload(translatedPath, audioBlob2, {
-        contentType: 'audio/mpeg',
-        upsert: true
-      })
-
-    if (storageError) {
-      throw storageError
-    }
-
-    // Get public URL for translated audio
-    const { data: publicUrlData } = supabase.storage
-      .from('videos')
-      .getPublicUrl(translatedPath)
-
-    // Update video record with results
+    // 4. Update video record with results
     const { error: updateError } = await supabase
       .from('videos')
       .update({
         status: 'completed',
-        transcript,
-        translated_transcript: translatedTranscript,
         summary,
-        translated_url: publicUrlData.publicUrl
+        translated_url: translatedUrl
       })
       .eq('id', videoId)
 
@@ -156,10 +145,8 @@ serve(async (req) => {
       JSON.stringify({
         message: 'Video processed successfully',
         video: {
-          transcript,
-          translated_transcript: translatedTranscript,
           summary,
-          translated_url: publicUrlData.publicUrl
+          translated_url: translatedUrl
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
