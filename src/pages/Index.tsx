@@ -7,6 +7,8 @@ import { VideoSummary } from "@/components/VideoSummary";
 import { ChatInterface } from "@/components/ChatInterface";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { Globe, Upload, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
@@ -20,22 +22,25 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <Navbar />
       <div className="flex-grow container mx-auto px-4 py-8">
-        {/* Enhanced Hero Section */}
+        {/* Enhanced Hero Section with Brand Identity */}
         <div className="text-center mb-12 relative">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.indigo.100),white)] opacity-20" />
           <div className="absolute inset-0 -z-10 mx-auto max-w-4xl blur-[100px]">
             <div className="relative aspect-[1024/256] bg-gradient-to-tr from-primary/40 via-secondary/40 to-accent/40" />
           </div>
           <div className="relative py-8 animate-fade-in">
-            <h1 className="text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent inline-block">
-              VidGlobe
-            </h1>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Globe className="w-12 h-12 text-primary animate-pulse" />
+              <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent inline-block">
+                VidGlobe
+              </h1>
+            </div>
             <div className="max-w-2xl mx-auto space-y-4">
-              <p className="text-lg text-gray-700 leading-relaxed">
-                Transform your videos into any language with AI-powered translation
+              <p className="text-lg text-gray-700 leading-relaxed font-medium">
+                Break Language Barriers with AI-Powered Video Translation
               </p>
               <p className="text-sm text-gray-600">
-                Get instant summaries and insights through our interactive chat
+                Transform your content instantly and reach a global audience
               </p>
             </div>
           </div>
@@ -54,8 +59,20 @@ const Index = () => {
                   </div>
                 </>
               ) : (
-                <div className="text-center p-8 rounded-lg border-2 border-dashed border-gray-200 bg-gradient-to-b from-white to-gray-50">
-                  <p className="text-gray-500">Upload a video to get started</p>
+                <div className="text-center p-12 rounded-lg border-2 border-dashed border-gray-200 bg-gradient-to-b from-white to-gray-50">
+                  <Globe className="w-16 h-16 mx-auto text-primary/40 mb-4" />
+                  <h2 className="text-xl font-semibold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                    Transform Your Video with AI!
+                  </h2>
+                  <p className="text-gray-500 mb-6">
+                    Upload your video or paste a URL to get started
+                  </p>
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-lg"
+                  >
+                    <Upload className="mr-2 h-5 w-5" /> Get Started
+                  </Button>
                 </div>
               )}
               <VideoUpload 
