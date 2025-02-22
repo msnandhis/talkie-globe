@@ -10,6 +10,11 @@ import { Footer } from "@/components/Footer";
 
 const Index = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
+  const [videoSrc, setVideoSrc] = useState<string>("");
+
+  const handleVideoSelected = ({ type, data }: { type: 'file' | 'url', data: string }) => {
+    setVideoSrc(data);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-gray-50">
@@ -30,10 +35,17 @@ const Index = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Video Upload and Player */}
           <div className="lg:col-span-2 space-y-8">
-            <VideoUpload />
-            <VideoPlayer />
-            <div className="flex justify-center">
-              <LanguageSelect onSelect={setSelectedLanguage} />
+            {videoSrc && <VideoPlayer src={videoSrc} />}
+            <div className="flex flex-col md:flex-row items-start gap-4">
+              <div className="flex-1 w-full">
+                <VideoUpload 
+                  onVideoSelected={handleVideoSelected}
+                  selectedLanguage={selectedLanguage}
+                />
+              </div>
+              <div className="w-full md:w-64">
+                <LanguageSelect onSelect={setSelectedLanguage} />
+              </div>
             </div>
           </div>
 
