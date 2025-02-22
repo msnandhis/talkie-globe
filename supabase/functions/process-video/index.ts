@@ -42,24 +42,25 @@ serve(async (req) => {
       .update({ status: 'processing' })
       .eq('id', videoId)
 
+    // Download video if it's a URL
+    const videoResponse = await fetch(video.stored_url)
+    if (!videoResponse.ok) {
+      throw new Error('Failed to fetch video')
+    }
+
+    const videoBlob = await videoResponse.blob()
+    
     // 1. Start dubbing with ElevenLabs
     const formData = new FormData()
-    
-    // Add video URL and required parameters
-    formData.append('source_url', video.stored_url)
+    formData.append('file', videoBlob, 'video.mp4')
     formData.append('target_lang', targetLanguage)
-    formData.append('source_lang', 'auto')
+    formData.append('source_lang', video.original_language || 'auto')
     formData.append('num_speakers', '0') // Auto-detect speakers
     formData.append('watermark', 'true') // Required for non-premium users
-    formData.append('highest_resolution', 'true') // Get best quality
+    formData.append('highest_resolution', 'true')
     formData.append('name', `Translation_${video.title || 'Untitled'}_${targetLanguage}`)
     
-    console.log('Starting ElevenLabs dubbing with parameters:', {
-      source_url: video.stored_url,
-      target_lang: targetLanguage,
-      watermark: true,
-      highest_resolution: true
-    })
+    console.log('Starting ElevenLabs dubbing with video file')
 
     const dubbingResponse = await fetch('https://api.elevenlabs.io/v1/dubbing', {
       method: 'POST',
@@ -76,8 +77,8 @@ serve(async (req) => {
       throw new Error(`Failed to start dubbing: ${errorData}`)
     }
 
-    const { dubbing_id } = await dubbingResponse.json()
-    console.log('Dubbing started with ID:', dubbing_id)
+    const dubbingResult = await dubbingResponse.json()
+    console.log('Dubbing started with ID:', dubbingResult.dubbing_id)
 
     // 2. Poll for dubbing completion
     let dubbingComplete = false
@@ -87,7 +88,7 @@ serve(async (req) => {
 
     while (!dubbingComplete && attempts < maxAttempts) {
       console.log(`Checking dubbing status (attempt ${attempts + 1})...`)
-      const statusResponse = await fetch(`https://api.elevenlabs.io/v1/dubbing/${dubbing_id}`, {
+      const statusResponse = await fetch(`https://api.elevenlabs.io/v1/dubbing/${dubbingResult.dubbing_id}`, {
         headers: {
           'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') ?? '',
           'Accept': 'application/json',
