@@ -45,29 +45,39 @@ serve(async (req) => {
     // 1. Start dubbing with ElevenLabs
     const formData = new FormData()
     
-    // Add video URL
+    // Add video URL and required parameters
     formData.append('source_url', video.stored_url)
     formData.append('target_lang', targetLanguage)
     formData.append('source_lang', 'auto')
     formData.append('num_speakers', '0') // Auto-detect speakers
-    formData.append('watermark', 'false')
+    formData.append('watermark', 'true') // Required for non-premium users
+    formData.append('highest_resolution', 'true') // Get best quality
+    formData.append('name', `Translation_${video.title || 'Untitled'}_${targetLanguage}`)
     
-    console.log('Starting ElevenLabs dubbing...')
+    console.log('Starting ElevenLabs dubbing with parameters:', {
+      source_url: video.stored_url,
+      target_lang: targetLanguage,
+      watermark: true,
+      highest_resolution: true
+    })
+
     const dubbingResponse = await fetch('https://api.elevenlabs.io/v1/dubbing', {
       method: 'POST',
       headers: {
         'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') ?? '',
+        'Accept': 'application/json',
       },
       body: formData,
     })
 
     if (!dubbingResponse.ok) {
-      const error = await dubbingResponse.text()
-      console.error('ElevenLabs error:', error)
-      throw new Error(`Failed to start dubbing: ${error}`)
+      const errorData = await dubbingResponse.text()
+      console.error('ElevenLabs error response:', errorData)
+      throw new Error(`Failed to start dubbing: ${errorData}`)
     }
 
     const { dubbing_id } = await dubbingResponse.json()
+    console.log('Dubbing started with ID:', dubbing_id)
 
     // 2. Poll for dubbing completion
     let dubbingComplete = false
@@ -80,20 +90,25 @@ serve(async (req) => {
       const statusResponse = await fetch(`https://api.elevenlabs.io/v1/dubbing/${dubbing_id}`, {
         headers: {
           'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') ?? '',
+          'Accept': 'application/json',
         },
       })
 
       if (!statusResponse.ok) {
-        throw new Error('Failed to check dubbing status')
+        const errorText = await statusResponse.text()
+        console.error('Status check error:', errorText)
+        throw new Error(`Failed to check dubbing status: ${errorText}`)
       }
 
       const status = await statusResponse.json()
+      console.log('Dubbing status:', status)
 
       if (status.status === 'done') {
         dubbingComplete = true
         translatedUrl = status.audio_url
+        console.log('Dubbing completed successfully:', translatedUrl)
       } else if (status.status === 'failed') {
-        throw new Error('Dubbing failed: ' + status.error)
+        throw new Error(`Dubbing failed: ${status.error || 'Unknown error'}`)
       }
 
       if (!dubbingComplete) {
@@ -103,7 +118,7 @@ serve(async (req) => {
     }
 
     if (!dubbingComplete) {
-      throw new Error('Dubbing timed out')
+      throw new Error('Dubbing timed out after 5 minutes')
     }
 
     // 3. Generate summary using GPT-4
@@ -133,7 +148,8 @@ serve(async (req) => {
       .update({
         status: 'completed',
         summary,
-        translated_url: translatedUrl
+        translated_url: translatedUrl,
+        target_language: targetLanguage
       })
       .eq('id', videoId)
 
