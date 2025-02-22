@@ -4,21 +4,17 @@ interface VideoPlayerProps {
 }
 
 export const VideoPlayer = ({ src }: VideoPlayerProps) => {
+  if (!src) return null; // Don't render anything if no video is selected
+
   return (
-    <div className="w-full aspect-video bg-gray-100 rounded-lg overflow-hidden animate-fade-in">
-      {src ? (
-        <video
-          controls
-          className="w-full h-full object-cover"
-          src={src}
-        >
-          Your browser does not support the video tag.
-        </video>
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-gray-400">
-          No video selected
-        </div>
-      )}
+    <div className="w-full aspect-video bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg overflow-hidden animate-fade-in">
+      <video
+        controls
+        className="w-full h-full object-cover"
+        src={src}
+      >
+        Your browser does not support the video tag.
+      </video>
     </div>
   );
 };

@@ -17,7 +17,7 @@ const Index = () => {
       <div className="flex-grow container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+          <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent">
             VidGlobe
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
@@ -30,8 +30,8 @@ const Index = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Video Upload and Player */}
           <div className="lg:col-span-2 space-y-8">
-            <VideoPlayer />
             <VideoUpload />
+            <VideoPlayer />
             <div className="flex justify-center">
               <LanguageSelect onSelect={setSelectedLanguage} />
             </div>

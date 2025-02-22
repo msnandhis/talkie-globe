@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,19 +10,19 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 172 70% 50%;
+    --primary: 243 75% 59%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 220 14% 65%;
+    --secondary: 217 91% 60%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 243 84% 86%;
+    --accent: 316 70% 43%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 172 70% 50%;
+    --ring: 243 75% 59%;
     --radius: 0.75rem;
   }
 }
@@ -38,7 +37,7 @@
 }
 
 .glass {
-  @apply bg-white/80 backdrop-blur-lg border border-white/20;
+  @apply bg-white/90 backdrop-blur-lg border border-white/20 shadow-lg;
 }
 
 .animate-fade-in {
