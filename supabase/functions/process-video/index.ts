@@ -13,19 +13,32 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  let reqBody;
   try {
-    const { videoId, targetLanguage } = await req.json()
-    
-    if (!videoId || !targetLanguage) {
-      throw new Error('Video ID and target language are required')
-    }
-
-    console.log('Processing video:', videoId, 'to language:', targetLanguage)
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    reqBody = await req.json();
+  } catch (e) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid request body' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
+  }
+
+  const { videoId, targetLanguage } = reqBody;
+  
+  if (!videoId || !targetLanguage) {
+    return new Response(
+      JSON.stringify({ error: 'Video ID and target language are required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
+
+  try {
+    console.log('Processing video:', videoId, 'to language:', targetLanguage)
 
     // Get video details
     const { data: video, error: videoError } = await supabase
@@ -63,7 +76,7 @@ serve(async (req) => {
     formData.append('source_lang', video.original_language || 'auto')
     formData.append('num_speakers', '0')
     formData.append('watermark', 'true')
-    formData.append('highest_resolution', 'true')
+    // Removed highest_resolution option as it requires Creator+ subscription
     formData.append('name', `Translation_${video.title || 'Untitled'}_${targetLanguage}`)
 
     console.log('Starting ElevenLabs dubbing...')
@@ -164,7 +177,7 @@ serve(async (req) => {
     })
 
     const summaryResponse = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -211,16 +224,11 @@ serve(async (req) => {
     console.error('Processing error:', error)
     
     // Update video status to failed
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-    
     try {
       await supabase
         .from('videos')
         .update({ status: 'failed' })
-        .eq('id', (await req.json()).videoId)
+        .eq('id', videoId)
     } catch (updateError) {
       console.error('Failed to update video status:', updateError)
     }
