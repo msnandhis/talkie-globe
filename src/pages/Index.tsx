@@ -12,9 +12,13 @@ import { Globe } from "lucide-react";
 const Index = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [videoSrc, setVideoSrc] = useState<string>("");
+  const [currentVideoId, setCurrentVideoId] = useState<string>("");
 
-  const handleVideoSelected = ({ type, data }: { type: 'file' | 'url', data: string }) => {
+  const handleVideoSelected = ({ type, data, videoId }: { type: 'file' | 'url', data: string, videoId?: string }) => {
     setVideoSrc(data);
+    if (videoId) {
+      setCurrentVideoId(videoId);
+    }
   };
 
   return (
@@ -68,10 +72,10 @@ const Index = () => {
           {/* Right Column - Summary and Chat */}
           <div className="lg:sticky lg:top-4 space-y-6 max-h-[calc(100vh-2rem)] overflow-y-auto pb-6">
             <div className="glass rounded-xl shadow-lg bg-white/90 backdrop-blur transition-all duration-200 hover:shadow-xl">
-              <VideoSummary />
+              <VideoSummary videoId={currentVideoId} />
             </div>
             <div className="glass rounded-xl shadow-lg bg-white/90 backdrop-blur transition-all duration-200 hover:shadow-xl">
-              <ChatInterface />
+              <ChatInterface videoId={currentVideoId} />
             </div>
           </div>
         </div>

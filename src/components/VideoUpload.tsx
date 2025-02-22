@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 
 interface VideoUploadProps {
-  onVideoSelected: (videoData: { type: 'file' | 'url', data: string }) => void;
+  onVideoSelected: (videoData: { type: 'file' | 'url', data: string, videoId?: string }) => void;
   selectedLanguage: string;
 }
 
@@ -49,7 +49,11 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
       if (error) throw error;
 
-      onVideoSelected({ type: 'file', data: uploadResponse.video.stored_url });
+      onVideoSelected({ 
+        type: 'file', 
+        data: uploadResponse.video.stored_url,
+        videoId: uploadResponse.video.id 
+      });
       setHasVideo(true);
       setCurrentVideoId(uploadResponse.video.id);
       
@@ -107,7 +111,11 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
       if (error) throw error;
 
-      onVideoSelected({ type: 'url', data: processResponse.video.stored_url });
+      onVideoSelected({ 
+        type: 'url', 
+        data: processResponse.video.stored_url,
+        videoId: processResponse.video.id 
+      });
       setHasVideo(true);
       setCurrentVideoId(processResponse.video.id);
       
@@ -132,7 +140,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
     if (!selectedLanguage) {
       toast({
         title: "Error",
-        description: "Please select a target language",
+        description: "Please select a target language first",
         variant: "destructive",
       });
       return;
@@ -150,7 +158,10 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
     setIsProcessing(true);
     try {
       const { data: processResponse, error } = await supabase.functions.invoke('process-video', {
-        body: { videoId: currentVideoId },
+        body: { 
+          videoId: currentVideoId,
+          targetLanguage: selectedLanguage 
+        },
       });
 
       if (error) throw error;
