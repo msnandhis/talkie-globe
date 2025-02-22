@@ -20,6 +20,8 @@ serve(async (req) => {
       throw new Error('Video ID and target language are required')
     }
 
+    console.log('Processing video:', videoId, 'to language:', targetLanguage)
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -36,32 +38,35 @@ serve(async (req) => {
       throw new Error('Video not found')
     }
 
+    console.log('Found video:', video.title)
+
     // Update status to processing
     await supabase
       .from('videos')
       .update({ status: 'processing' })
       .eq('id', videoId)
 
-    // Download video if it's a URL
+    // Download video content
+    console.log('Downloading video from:', video.stored_url)
     const videoResponse = await fetch(video.stored_url)
     if (!videoResponse.ok) {
-      throw new Error('Failed to fetch video')
+      throw new Error('Failed to fetch video content')
     }
 
     const videoBlob = await videoResponse.blob()
+    const videoFile = new File([videoBlob], 'video.mp4', { type: videoBlob.type })
     
-    // 1. Start dubbing with ElevenLabs
+    // Start dubbing with ElevenLabs
     const formData = new FormData()
-    formData.append('file', videoBlob, 'video.mp4')
+    formData.append('file', videoFile)
     formData.append('target_lang', targetLanguage)
     formData.append('source_lang', video.original_language || 'auto')
-    formData.append('num_speakers', '0') // Auto-detect speakers
-    formData.append('watermark', 'true') // Required for non-premium users
+    formData.append('num_speakers', '0')
+    formData.append('watermark', 'true')
     formData.append('highest_resolution', 'true')
     formData.append('name', `Translation_${video.title || 'Untitled'}_${targetLanguage}`)
-    
-    console.log('Starting ElevenLabs dubbing with video file')
 
+    console.log('Starting ElevenLabs dubbing...')
     const dubbingResponse = await fetch('https://api.elevenlabs.io/v1/dubbing', {
       method: 'POST',
       headers: {
@@ -73,21 +78,22 @@ serve(async (req) => {
 
     if (!dubbingResponse.ok) {
       const errorData = await dubbingResponse.text()
-      console.error('ElevenLabs error response:', errorData)
+      console.error('ElevenLabs error:', errorData)
       throw new Error(`Failed to start dubbing: ${errorData}`)
     }
 
     const dubbingResult = await dubbingResponse.json()
     console.log('Dubbing started with ID:', dubbingResult.dubbing_id)
 
-    // 2. Poll for dubbing completion
+    // Poll for dubbing completion
     let dubbingComplete = false
     let translatedUrl = null
     let attempts = 0
-    const maxAttempts = 60 // 5 minutes maximum (with 5s intervals)
+    const maxAttempts = 60
 
     while (!dubbingComplete && attempts < maxAttempts) {
       console.log(`Checking dubbing status (attempt ${attempts + 1})...`)
+      
       const statusResponse = await fetch(`https://api.elevenlabs.io/v1/dubbing/${dubbingResult.dubbing_id}`, {
         headers: {
           'xi-api-key': Deno.env.get('ELEVEN_LABS_API_KEY') ?? '',
@@ -102,18 +108,18 @@ serve(async (req) => {
       }
 
       const status = await statusResponse.json()
-      console.log('Dubbing status:', status)
+      console.log('Dubbing status:', status.status)
 
       if (status.status === 'done') {
         dubbingComplete = true
         translatedUrl = status.audio_url
-        console.log('Dubbing completed successfully:', translatedUrl)
+        console.log('Dubbing completed. Audio URL:', translatedUrl)
       } else if (status.status === 'failed') {
         throw new Error(`Dubbing failed: ${status.error || 'Unknown error'}`)
       }
 
       if (!dubbingComplete) {
-        await new Promise(resolve => setTimeout(resolve, 5000)) // Wait 5 seconds before next check
+        await new Promise(resolve => setTimeout(resolve, 5000))
         attempts++
       }
     }
@@ -122,7 +128,37 @@ serve(async (req) => {
       throw new Error('Dubbing timed out after 5 minutes')
     }
 
-    // 3. Generate summary using GPT-4
+    // Download and store translated audio
+    console.log('Downloading translated audio...')
+    const audioResponse = await fetch(translatedUrl)
+    if (!audioResponse.ok) {
+      throw new Error('Failed to fetch translated audio')
+    }
+
+    const audioBlob = await audioResponse.blob()
+    const audioPath = `${videoId}/${crypto.randomUUID()}.mp3`
+
+    console.log('Storing translated audio in Supabase...')
+    const { error: audioUploadError } = await supabase
+      .storage
+      .from('translations')
+      .upload(audioPath, audioBlob, {
+        contentType: 'audio/mpeg',
+        cacheControl: '3600'
+      })
+
+    if (audioUploadError) {
+      console.error('Audio upload error:', audioUploadError)
+      throw new Error('Failed to store translated audio')
+    }
+
+    const { data: { publicUrl: storedAudioUrl } } = supabase
+      .storage
+      .from('translations')
+      .getPublicUrl(audioPath)
+
+    // Generate summary
+    console.log('Generating summary...')
     const openai = new OpenAI({
       apiKey: Deno.env.get('OPENAI_API_KEY'),
     })
@@ -143,18 +179,20 @@ serve(async (req) => {
 
     const summary = summaryResponse.choices[0].message.content
 
-    // 4. Update video record with results
+    // Update video record
+    console.log('Updating video record...')
     const { error: updateError } = await supabase
       .from('videos')
       .update({
         status: 'completed',
         summary,
-        translated_url: translatedUrl,
+        translated_url: storedAudioUrl,
         target_language: targetLanguage
       })
       .eq('id', videoId)
 
     if (updateError) {
+      console.error('Update error:', updateError)
       throw updateError
     }
 
@@ -163,14 +201,30 @@ serve(async (req) => {
         message: 'Video processed successfully',
         video: {
           summary,
-          translated_url: translatedUrl
+          translated_url: storedAudioUrl
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Processing error:', error)
+    
+    // Update video status to failed
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+    
+    try {
+      await supabase
+        .from('videos')
+        .update({ status: 'failed' })
+        .eq('id', (await req.json()).videoId)
+    } catch (updateError) {
+      console.error('Failed to update video status:', updateError)
+    }
+
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

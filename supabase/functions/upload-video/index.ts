@@ -23,37 +23,46 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Ensure storage buckets exist
+    await supabase.storage.createBucket('videos', {
+      public: true,
+      fileSizeLimit: 52428800
+    }).catch(() => {
+      // Bucket might already exist, continue
+      console.log('Videos bucket already exists')
+    })
+
+    await supabase.storage.createBucket('translations', {
+      public: true,
+      fileSizeLimit: 52428800
+    }).catch(() => {
+      // Bucket might already exist, continue
+      console.log('Translations bucket already exists')
+    })
+
     let videoUrl: string | null = null;
     let fileName: string;
 
     if (formData.has('video')) {
-      // Handle direct video upload
       const file = formData.get('video') as File
       fileName = file.name
       const fileExt = fileName.split('.').pop()
       const filePath = `${crypto.randomUUID()}.${fileExt}`
 
-      // Create videos bucket if it doesn't exist
-      const { data: bucketData, error: bucketError } = await supabase
-        .storage
-        .getBucket('videos')
+      console.log('Uploading video file:', filePath)
 
-      if (!bucketData) {
-        await supabase
-          .storage
-          .createBucket('videos', {
-            public: true,
-            fileSizeLimit: 52428800 // 50MB
-          })
-      }
-
-      // Upload to storage
+      // Upload to videos bucket
       const { error: uploadError } = await supabase
         .storage
         .from('videos')
-        .upload(filePath, file)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          contentType: file.type,
+          upsert: false
+        })
 
       if (uploadError) {
+        console.error('Upload error:', uploadError)
         throw new Error(`Failed to upload video: ${uploadError.message}`)
       }
 
@@ -64,10 +73,11 @@ serve(async (req) => {
         .getPublicUrl(filePath)
 
       videoUrl = publicUrl
+      console.log('Video uploaded successfully:', videoUrl)
     } else if (metadata.originalUrl) {
-      // Handle video URL
       videoUrl = metadata.originalUrl
       fileName = 'video_from_url'
+      console.log('Using video URL:', videoUrl)
     } else {
       throw new Error('No video file or URL provided')
     }
@@ -82,12 +92,16 @@ serve(async (req) => {
         original_language: metadata.originalLanguage || 'auto',
         target_language: metadata.targetLanguage,
         status: 'pending',
-        metadata
+        metadata: {
+          ...metadata,
+          fileType: formData.has('video') ? (formData.get('video') as File).type : 'url'
+        }
       })
       .select()
       .single()
 
     if (dbError) {
+      console.error('Database error:', dbError)
       throw dbError
     }
 
