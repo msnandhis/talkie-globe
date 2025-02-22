@@ -59,7 +59,6 @@ const Index = () => {
                 </>
               ) : (
                 <div className="text-center p-12 rounded-lg border-2 border-dashed border-gray-200 bg-gradient-to-b from-white to-gray-50">
-                  <Globe className="w-16 h-16 mx-auto text-primary/40 mb-4" />
                 </div>
               )}
               <VideoUpload 
@@ -69,7 +68,7 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Right Column - Summary and Chat with improved UI */}
+          {/* Right Column - Summary and Chat */}
           <div className="lg:sticky lg:top-4 space-y-6 max-h-[calc(100vh-2rem)] overflow-y-auto pb-6">
             <div className="glass rounded-xl shadow-lg bg-white/90 backdrop-blur transition-all duration-200 hover:shadow-xl">
               <VideoSummary />
