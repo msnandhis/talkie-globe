@@ -7,8 +7,7 @@ import { VideoSummary } from "@/components/VideoSummary";
 import { ChatInterface } from "@/components/ChatInterface";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Globe, Upload, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Globe } from "lucide-react";
 
 const Index = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
@@ -61,18 +60,6 @@ const Index = () => {
               ) : (
                 <div className="text-center p-12 rounded-lg border-2 border-dashed border-gray-200 bg-gradient-to-b from-white to-gray-50">
                   <Globe className="w-16 h-16 mx-auto text-primary/40 mb-4" />
-                  <h2 className="text-xl font-semibold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-                    Transform Your Video with AI!
-                  </h2>
-                  <p className="text-gray-500 mb-6">
-                    Upload your video or paste a URL to get started
-                  </p>
-                  <Button 
-                    size="lg" 
-                    className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 shadow-lg"
-                  >
-                    <Upload className="mr-2 h-5 w-5" /> Get Started
-                  </Button>
                 </div>
               )}
               <VideoUpload 
