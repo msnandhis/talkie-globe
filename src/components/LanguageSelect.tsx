@@ -26,12 +26,12 @@ interface LanguageSelectProps {
 
 export const LanguageSelect = ({ onSelect }: LanguageSelectProps) => {
   return (
-    <div className="w-full max-w-xs animate-fade-in">
+    <div className="w-full animate-fade-in">
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        Select Target Language
+        Select Target Language for Translation
       </label>
       <Select onValueChange={onSelect}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full bg-white">
           <SelectValue placeholder="Choose language" />
         </SelectTrigger>
         <SelectContent>

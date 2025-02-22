@@ -96,7 +96,6 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
       // Simulated processing delay
       await new Promise((resolve) => setTimeout(resolve, 3000));
       // For demo purposes, we're just using the same video URL
-      // In a real app, this would be the translated video URL
       setTranslatedVideoUrl(url || "sample-translated-video.mp4");
       toast({
         title: "Success!",
@@ -115,8 +114,8 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
   if (translatedVideoUrl) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between p-3 border rounded-lg bg-muted">
+      <div className="space-y-4 animate-fade-in">
+        <div className="flex items-center justify-between p-3 border rounded-lg bg-white/50 backdrop-blur">
           <div className="flex items-center gap-2">
             <Video className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium">Translation Complete</span>
@@ -127,7 +126,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
         </div>
         <video 
           controls 
-          className="w-full rounded-lg"
+          className="w-full rounded-lg shadow-lg"
           src={translatedVideoUrl}
         >
           Your browser does not support the video tag.
@@ -140,13 +139,16 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
     <div className="space-y-4">
       {!hasVideo ? (
         <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="w-full">
-            <TabsTrigger value="upload" className="flex-1">Upload Video</TabsTrigger>
-            <TabsTrigger value="url" className="flex-1">Video URL</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-2 bg-white/50 backdrop-blur">
+            <TabsTrigger value="upload">Upload Video</TabsTrigger>
+            <TabsTrigger value="url">Video URL</TabsTrigger>
           </TabsList>
           <TabsContent value="upload" className="mt-4">
-            <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg border-gray-200 hover:border-primary/50 transition-colors">
-              <Video className="w-8 h-8 text-primary mb-2" />
+            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg border-gray-200 hover:border-primary/50 transition-colors bg-white/50 backdrop-blur">
+              <Video className="w-8 h-8 text-primary mb-4" />
+              <p className="text-sm text-gray-500 mb-4 text-center">
+                Click to choose a video file or drag and drop here
+              </p>
               <Input
                 type="file"
                 accept="video/*"
@@ -155,7 +157,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
                 id="video-upload"
               />
               <label htmlFor="video-upload">
-                <Button size="sm" disabled={uploading}>
+                <Button size="sm" disabled={uploading} variant="secondary">
                   <Upload className="mr-2 h-4 w-4" />
                   Choose Video
                 </Button>
@@ -178,7 +180,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
           </TabsContent>
         </Tabs>
       ) : (
-        <div className="flex items-center justify-between p-3 border rounded-lg bg-muted">
+        <div className="flex items-center justify-between p-4 border rounded-lg bg-white/50 backdrop-blur">
           <div className="flex items-center gap-2">
             <Video className="w-5 h-5 text-primary" />
             <div>
@@ -190,6 +192,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
             size="sm"
             onClick={handleSubmit} 
             disabled={!selectedLanguage || isProcessing}
+            className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
           >
             {isProcessing ? 'Processing...' : 'Translate Video'}
             <ArrowRight className="ml-2 h-4 w-4" />
