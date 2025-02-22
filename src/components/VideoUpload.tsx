@@ -17,6 +17,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
   const [hasVideo, setHasVideo] = useState(false);
   const [translatedVideoUrl, setTranslatedVideoUrl] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -50,6 +51,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
       const videoUrl = uploadResponse.video.stored_url;
       onVideoSelected({ type: 'file', data: videoUrl });
       setHasVideo(true);
+      setCurrentVideoId(uploadResponse.video.id);
       
       toast({
         title: "Success!",
@@ -107,6 +109,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
       onVideoSelected({ type: 'url', data: processResponse.video.stored_url });
       setHasVideo(true);
+      setCurrentVideoId(processResponse.video.id);
       
       toast({
         title: "Success!",
@@ -136,13 +139,20 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
     setIsProcessing(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      setTranslatedVideoUrl(url || "sample-translated-video.mp4");
+      const { data: processResponse, error } = await supabase.functions.invoke('process-video', {
+        body: { videoId: currentVideoId },
+      });
+
+      if (error) throw error;
+
+      setTranslatedVideoUrl(processResponse.video.translated_url);
+      
       toast({
         title: "Success!",
-        description: "Video has been translated successfully",
+        description: "Video has been processed successfully",
       });
     } catch (error) {
+      console.error('Processing error:', error);
       toast({
         title: "Error",
         description: "Failed to process video",
