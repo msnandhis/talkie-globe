@@ -9,78 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      videos: {
-        Row: {
-          created_at: string | null
-          error_message: string | null
-          fal_ai_id: string | null
-          generated_content: Json | null
-          id: string
-          linkedin_status: string | null
-          linkedin_url: string | null
-          metadata: Json | null
-          script: string | null
-          spotify_status: string | null
-          spotify_url: string | null
-          status: Database["public"]["Enums"]["video_status"] | null
-          thumbnail_url: string | null
-          topic: string
-          updated_at: string | null
-          user_id: string | null
-          video_url: string | null
-          voice_id: string | null
-          voice_url: string | null
-          youtube_status: string | null
-          youtube_url: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          error_message?: string | null
-          fal_ai_id?: string | null
-          generated_content?: Json | null
-          id?: string
-          linkedin_status?: string | null
-          linkedin_url?: string | null
-          metadata?: Json | null
-          script?: string | null
-          spotify_status?: string | null
-          spotify_url?: string | null
-          status?: Database["public"]["Enums"]["video_status"] | null
-          thumbnail_url?: string | null
-          topic: string
-          updated_at?: string | null
-          user_id?: string | null
-          video_url?: string | null
-          voice_id?: string | null
-          voice_url?: string | null
-          youtube_status?: string | null
-          youtube_url?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          error_message?: string | null
-          fal_ai_id?: string | null
-          generated_content?: Json | null
-          id?: string
-          linkedin_status?: string | null
-          linkedin_url?: string | null
-          metadata?: Json | null
-          script?: string | null
-          spotify_status?: string | null
-          spotify_url?: string | null
-          status?: Database["public"]["Enums"]["video_status"] | null
-          thumbnail_url?: string | null
-          topic?: string
-          updated_at?: string | null
-          user_id?: string | null
-          video_url?: string | null
-          voice_id?: string | null
-          voice_url?: string | null
-          youtube_status?: string | null
-          youtube_url?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
@@ -89,14 +18,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      video_status:
-        | "pending"
-        | "generating_script"
-        | "generating_voice"
-        | "generating_video"
-        | "uploading"
-        | "completed"
-        | "failed"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
