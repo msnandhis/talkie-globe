@@ -34,18 +34,14 @@ const Index = () => {
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Video Upload and Player */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6">
             {videoSrc && <VideoPlayer src={videoSrc} />}
-            <div className="flex flex-col md:flex-row items-start gap-4">
-              <div className="flex-1 w-full">
-                <VideoUpload 
-                  onVideoSelected={handleVideoSelected}
-                  selectedLanguage={selectedLanguage}
-                />
-              </div>
-              <div className="w-full md:w-64">
-                <LanguageSelect onSelect={setSelectedLanguage} />
-              </div>
+            <div className="space-y-4">
+              <LanguageSelect onSelect={setSelectedLanguage} />
+              <VideoUpload 
+                onVideoSelected={handleVideoSelected}
+                selectedLanguage={selectedLanguage}
+              />
             </div>
           </div>
 
