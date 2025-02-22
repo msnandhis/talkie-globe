@@ -10,9 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface VideoUploadProps {
   onVideoSelected: (videoData: { type: 'file' | 'url', data: string, videoId?: string }) => void;
   selectedLanguage: string;
+  onTranslationComplete: (translatedUrl: string) => void;
 }
 
-export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadProps) => {
+export const VideoUpload = ({ onVideoSelected, selectedLanguage, onTranslationComplete }: VideoUploadProps) => {
   const [url, setUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [hasVideo, setHasVideo] = useState(false);
@@ -166,7 +167,10 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
       if (error) throw error;
 
-      setTranslatedVideoUrl(processResponse.video.translated_url);
+      if (processResponse.video.translated_url) {
+        setTranslatedVideoUrl(processResponse.video.translated_url);
+        onTranslationComplete(processResponse.video.translated_url);
+      }
       
       toast({
         title: "Success!",
