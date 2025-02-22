@@ -50,16 +50,13 @@ const Index = () => {
           {/* Left Column - Video Upload and Player */}
           <div className="lg:col-span-2 space-y-6">
             <div className="glass rounded-xl p-6 space-y-6 shadow-xl bg-white/90">
-              {videoSrc ? (
+              {videoSrc && (
                 <>
                   <VideoPlayer src={videoSrc} />
                   <div className="border-t pt-6">
                     <LanguageSelect onSelect={setSelectedLanguage} />
                   </div>
                 </>
-              ) : (
-                <div className="text-center p-12 rounded-lg border-2 border-dashed border-gray-200 bg-gradient-to-b from-white to-gray-50">
-                </div>
               )}
               <VideoUpload 
                 onVideoSelected={handleVideoSelected}
