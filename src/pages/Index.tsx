@@ -5,13 +5,16 @@ import { LanguageSelect } from "@/components/LanguageSelect";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { VideoSummary } from "@/components/VideoSummary";
 import { ChatInterface } from "@/components/ChatInterface";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 
 const Index = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-white to-gray-50">
+      <Navbar />
+      <div className="flex-grow container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
@@ -41,6 +44,7 @@ const Index = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
