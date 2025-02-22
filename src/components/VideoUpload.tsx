@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,13 +124,6 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
             New Translation
           </Button>
         </div>
-        <video 
-          controls 
-          className="w-full rounded-lg shadow-lg"
-          src={translatedVideoUrl}
-        >
-          Your browser does not support the video tag.
-        </video>
       </div>
     );
   }
@@ -160,10 +154,12 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
                 id="video-upload"
               />
               <label htmlFor="video-upload">
-                <Button size="sm" disabled={uploading} variant="secondary" className="bg-white hover:bg-gray-50">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Choose Video
-                </Button>
+                <div className="cursor-pointer">
+                  <Button size="sm" disabled={uploading} variant="secondary" className="bg-white hover:bg-gray-50">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Choose Video
+                  </Button>
+                </div>
               </label>
             </div>
           </TabsContent>
