@@ -21,7 +21,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <Navbar />
       <div className="flex-grow container mx-auto px-4 py-8">
-        {/* Enhanced Hero Section with Brand Identity */}
+        {/* Hero Section */}
         <div className="text-center mb-12 relative">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.indigo.100),white)] opacity-20" />
           <div className="absolute inset-0 -z-10 mx-auto max-w-4xl blur-[100px]">
@@ -69,12 +69,12 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Right Column - Summary and Chat */}
-          <div className="space-y-6">
-            <div className="glass rounded-xl p-6 shadow-lg bg-white/90">
+          {/* Right Column - Summary and Chat with improved UI */}
+          <div className="lg:sticky lg:top-4 space-y-6 max-h-[calc(100vh-2rem)] overflow-y-auto pb-6">
+            <div className="glass rounded-xl shadow-lg bg-white/90 backdrop-blur transition-all duration-200 hover:shadow-xl">
               <VideoSummary />
             </div>
-            <div className="glass rounded-xl p-6 shadow-lg bg-white/90">
+            <div className="glass rounded-xl shadow-lg bg-white/90 backdrop-blur transition-all duration-200 hover:shadow-xl">
               <ChatInterface />
             </div>
           </div>

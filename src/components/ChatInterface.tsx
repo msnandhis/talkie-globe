@@ -1,12 +1,14 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Mic, MicOff } from "lucide-react";
+import { MessageSquare, Mic, MicOff, ChevronUp, ChevronDown } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 export const ChatInterface = () => {
   const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [responses, setResponses] = useState<Array<{ question: string; answer: string }>>([]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,63 +60,79 @@ export const ChatInterface = () => {
   ];
 
   return (
-    <div className="space-y-4 animate-slide-in">
-      <div className="glass rounded-lg p-4 bg-white/80">
-        <h3 className="text-lg font-semibold mb-3">Suggested Questions</h3>
-        <div className="space-y-2">
-          {suggestedQuestions.map((question, index) => (
-            <Button
-              key={index}
-              variant="secondary"
-              className="w-full justify-start text-left text-sm bg-white/50 hover:bg-white/80 transition-colors"
-              onClick={() => handleQuestionClick(question)}
-            >
-              {question}
-            </Button>
-          ))}
-        </div>
+    <div className="animate-slide-in">
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-800">Chat Assistant</h3>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
       </div>
 
-      {responses.length > 0 && (
-        <div className="space-y-4 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
-          {responses.map((response, index) => (
-            <div key={index} className="bg-white/50 rounded-lg p-3 space-y-2">
-              <p className="text-sm font-medium text-primary">{response.question}</p>
-              <p className="text-sm text-gray-600">{response.answer}</p>
+      {isExpanded && (
+        <div className="p-4 space-y-4">
+          <div className="bg-gray-50/50 rounded-lg p-4 border border-gray-100">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Suggested Questions</h4>
+            <div className="space-y-2">
+              {suggestedQuestions.map((question, index) => (
+                <Button
+                  key={index}
+                  variant="ghost"
+                  className="w-full justify-start text-left text-sm hover:bg-white/80 transition-colors"
+                  onClick={() => handleQuestionClick(question)}
+                >
+                  {question}
+                </Button>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {responses.length > 0 && (
+            <div className="space-y-4 max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+              {responses.map((response, index) => (
+                <div key={index} className="bg-white rounded-lg p-3 space-y-2 border border-gray-100">
+                  <p className="text-sm font-medium text-primary">{response.question}</p>
+                  <p className="text-sm text-gray-600">{response.answer}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Ask a question about the video..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="flex-1 bg-white border-gray-200 focus:border-primary/50 focus:ring-primary/50"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className={`${
+                isRecording 
+                  ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                  : 'bg-white hover:bg-gray-50'
+              } transition-colors`}
+              onClick={toggleVoiceRecording}
+            >
+              {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
+            <Button 
+              type="submit" 
+              size="icon"
+              className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+            >
+              <MessageSquare className="h-4 w-4" />
+            </Button>
+          </form>
         </div>
       )}
-
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <Input
-          type="text"
-          placeholder="Ask a question about the video..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 bg-white border-gray-200 focus:border-primary/50 focus:ring-primary/50"
-        />
-        <Button
-          type="button"
-          variant="secondary"
-          size="icon"
-          className={`${
-            isRecording 
-              ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-              : 'bg-white hover:bg-gray-50'
-          } transition-colors`}
-          onClick={toggleVoiceRecording}
-        >
-          {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-        </Button>
-        <Button 
-          type="submit" 
-          size="icon"
-          className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
-        >
-          <MessageSquare className="h-4 w-4" />
-        </Button>
-      </form>
     </div>
   );
 };
