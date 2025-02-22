@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,14 +138,18 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
     <div className="space-y-4">
       {!hasVideo ? (
         <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="w-full grid grid-cols-2 bg-white/50 backdrop-blur">
-            <TabsTrigger value="upload">Upload Video</TabsTrigger>
-            <TabsTrigger value="url">Video URL</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-2 bg-gray-100 border border-gray-200">
+            <TabsTrigger value="upload" className="data-[state=active]:bg-white data-[state=active]:text-primary">
+              Upload Video
+            </TabsTrigger>
+            <TabsTrigger value="url" className="data-[state=active]:bg-white data-[state=active]:text-primary">
+              Video URL
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="upload" className="mt-4">
-            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg border-gray-200 hover:border-primary/50 transition-colors bg-white/50 backdrop-blur">
+            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg border-gray-200 hover:border-primary/50 transition-colors bg-gray-50">
               <Video className="w-8 h-8 text-primary mb-4" />
-              <p className="text-sm text-gray-500 mb-4 text-center">
+              <p className="text-sm text-gray-600 mb-4 text-center">
                 Click to choose a video file or drag and drop here
               </p>
               <Input
@@ -157,7 +160,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
                 id="video-upload"
               />
               <label htmlFor="video-upload">
-                <Button size="sm" disabled={uploading} variant="secondary">
+                <Button size="sm" disabled={uploading} variant="secondary" className="bg-white hover:bg-gray-50">
                   <Upload className="mr-2 h-4 w-4" />
                   Choose Video
                 </Button>
@@ -171,7 +174,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
                 placeholder="Paste video URL..."
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                className="flex-1"
+                className="flex-1 bg-white border-gray-200"
               />
               <Button type="submit" size="sm" disabled={uploading}>
                 Process URL
