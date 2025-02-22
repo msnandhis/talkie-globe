@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, Globe, Video, ArrowRight } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VideoUploadProps {
   onVideoSelected: (videoData: { type: 'file' | 'url', data: string }) => void;
@@ -33,14 +33,30 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
     setUploading(true);
     try {
-      const videoUrl = URL.createObjectURL(file);
+      const formData = new FormData();
+      formData.append('video', file);
+      formData.append('metadata', JSON.stringify({
+        title: file.name,
+        originalLanguage: 'auto',
+        targetLanguage: selectedLanguage,
+      }));
+
+      const { data: uploadResponse, error } = await supabase.functions.invoke('upload-video', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      const videoUrl = uploadResponse.video.stored_url;
       onVideoSelected({ type: 'file', data: videoUrl });
       setHasVideo(true);
+      
       toast({
         title: "Success!",
         description: "Video uploaded successfully",
       });
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Error",
         description: "Failed to upload video",
@@ -64,13 +80,29 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
     setUploading(true);
     try {
+      const formData = new FormData();
+      formData.append('metadata', JSON.stringify({
+        title: 'Video from URL',
+        originalUrl: url,
+        originalLanguage: 'auto',
+        targetLanguage: selectedLanguage,
+      }));
+
+      const { data: processResponse, error } = await supabase.functions.invoke('upload-video', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
       onVideoSelected({ type: 'url', data: url });
       setHasVideo(true);
+      
       toast({
         title: "Success!",
         description: "Video URL processed successfully",
       });
     } catch (error) {
+      console.error('Process error:', error);
       toast({
         title: "Error",
         description: "Failed to process video URL",
@@ -93,9 +125,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
     setIsProcessing(true);
     try {
-      // Simulated processing delay
       await new Promise((resolve) => setTimeout(resolve, 3000));
-      // For demo purposes, we're just using the same video URL
       setTranslatedVideoUrl(url || "sample-translated-video.mp4");
       toast({
         title: "Success!",
@@ -157,7 +187,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
                 <div className="cursor-pointer">
                   <Button size="sm" disabled={uploading} variant="secondary" className="bg-white hover:bg-gray-50">
                     <Upload className="mr-2 h-4 w-4" />
-                    Choose Video
+                    {uploading ? 'Uploading...' : 'Choose Video'}
                   </Button>
                 </div>
               </label>
@@ -173,7 +203,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
                 className="flex-1 bg-white border-gray-200"
               />
               <Button type="submit" size="sm" disabled={uploading}>
-                Process URL
+                {uploading ? 'Processing...' : 'Process URL'}
               </Button>
             </form>
           </TabsContent>
