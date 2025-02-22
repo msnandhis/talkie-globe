@@ -44,41 +44,6 @@ const Index = () => {
             </div>
           </div>
         </div>
-
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Video Upload and Player */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="glass rounded-xl p-6 space-y-6 shadow-xl bg-white/90">
-              {videoSrc ? (
-                <>
-                  <VideoPlayer src={videoSrc} />
-                  <div className="border-t pt-6">
-                    <LanguageSelect onSelect={setSelectedLanguage} />
-                  </div>
-                </>
-              ) : (
-                <div className="text-center p-12 rounded-lg border-2 border-dashed border-gray-200 bg-gradient-to-b from-white to-gray-50">
-                  <Globe className="w-16 h-16 mx-auto text-primary/40 mb-4" />
-                </div>
-              )}
-              <VideoUpload 
-                onVideoSelected={handleVideoSelected}
-                selectedLanguage={selectedLanguage}
-              />
-            </div>
-          </div>
-
-          {/* Right Column - Summary and Chat */}
-          <div className="space-y-6">
-            <div className="glass rounded-xl p-6 shadow-lg bg-white/90">
-              <VideoSummary />
-            </div>
-            <div className="glass rounded-xl p-6 shadow-lg bg-white/90">
-              <ChatInterface />
-            </div>
-          </div>
-        </div>
       </div>
       <Footer />
     </div>
