@@ -13,12 +13,17 @@ const Index = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("");
   const [videoSrc, setVideoSrc] = useState<string>("");
   const [currentVideoId, setCurrentVideoId] = useState<string>("");
+  const [translatedAudioSrc, setTranslatedAudioSrc] = useState<string>("");
 
   const handleVideoSelected = ({ type, data, videoId }: { type: 'file' | 'url', data: string, videoId?: string }) => {
     setVideoSrc(data);
     if (videoId) {
       setCurrentVideoId(videoId);
     }
+  };
+
+  const handleTranslationComplete = (translatedUrl: string) => {
+    setTranslatedAudioSrc(translatedUrl);
   };
 
   return (
@@ -56,7 +61,7 @@ const Index = () => {
             <div className="glass rounded-xl p-6 space-y-6 shadow-xl bg-white/90">
               {videoSrc && (
                 <>
-                  <VideoPlayer src={videoSrc} />
+                  <VideoPlayer src={videoSrc} translatedAudioSrc={translatedAudioSrc} />
                   <div className="border-t pt-6">
                     <LanguageSelect onSelect={setSelectedLanguage} />
                   </div>
@@ -65,6 +70,7 @@ const Index = () => {
               <VideoUpload 
                 onVideoSelected={handleVideoSelected}
                 selectedLanguage={selectedLanguage}
+                onTranslationComplete={handleTranslationComplete}
               />
             </div>
           </div>

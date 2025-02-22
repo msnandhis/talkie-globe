@@ -14,8 +14,12 @@ serve(async (req) => {
   }
 
   try {
-    const { videoId } = await req.json()
+    const { videoId, targetLanguage } = await req.json()
     
+    if (!videoId || !targetLanguage) {
+      throw new Error('Video ID and target language are required')
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -66,11 +70,11 @@ serve(async (req) => {
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant that creates concise video summaries. Focus on key points and main ideas."
+          content: `You are a helpful assistant that creates concise video summaries in ${targetLanguage}. Focus on key points and main ideas.`
         },
         {
           role: "user",
-          content: `Please provide a summary of this video transcript:\n\n${transcript}`
+          content: `Please provide a summary of this video transcript in ${targetLanguage}:\n\n${transcript}`
         }
       ],
     })
@@ -83,7 +87,7 @@ serve(async (req) => {
       messages: [
         {
           role: "system",
-          content: `You are a professional translator. Translate the following text to ${video.target_language}. Maintain the original meaning and tone.`
+          content: `You are a professional translator. Translate the following text to ${targetLanguage}. Maintain the original meaning and tone.`
         },
         {
           role: "user",
@@ -94,6 +98,44 @@ serve(async (req) => {
 
     const translatedTranscript = translationResponse.choices[0].message.content
 
+    // 4. Generate audio from translated text
+    const audioResponse = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'tts-1',
+        input: translatedTranscript,
+        voice: 'alloy',
+      }),
+    })
+
+    if (!audioResponse.ok) {
+      throw new Error('Failed to generate translated audio')
+    }
+
+    // 5. Upload translated audio to Supabase Storage
+    const audioBlob2 = await audioResponse.blob()
+    const translatedPath = `translated/${videoId}.mp3`
+
+    const { data: storageData, error: storageError } = await supabase.storage
+      .from('videos')
+      .upload(translatedPath, audioBlob2, {
+        contentType: 'audio/mpeg',
+        upsert: true
+      })
+
+    if (storageError) {
+      throw storageError
+    }
+
+    // Get public URL for translated audio
+    const { data: publicUrlData } = supabase.storage
+      .from('videos')
+      .getPublicUrl(translatedPath)
+
     // Update video record with results
     const { error: updateError } = await supabase
       .from('videos')
@@ -102,6 +144,7 @@ serve(async (req) => {
         transcript,
         translated_transcript: translatedTranscript,
         summary,
+        translated_url: publicUrlData.publicUrl
       })
       .eq('id', videoId)
 
@@ -116,6 +159,7 @@ serve(async (req) => {
           transcript,
           translated_transcript: translatedTranscript,
           summary,
+          translated_url: publicUrlData.publicUrl
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
