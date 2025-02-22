@@ -78,6 +78,17 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
       return;
     }
 
+    try {
+      new URL(url);
+    } catch {
+      toast({
+        title: "Error",
+        description: "Please enter a valid URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploading(true);
     try {
       const formData = new FormData();
@@ -94,7 +105,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
       if (error) throw error;
 
-      onVideoSelected({ type: 'url', data: url });
+      onVideoSelected({ type: 'url', data: processResponse.video.stored_url });
       setHasVideo(true);
       
       toast({
@@ -105,7 +116,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
       console.error('Process error:', error);
       toast({
         title: "Error",
-        description: "Failed to process video URL",
+        description: "Failed to process video URL. Please make sure the URL is accessible.",
         variant: "destructive",
       });
     } finally {
