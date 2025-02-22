@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,8 +49,7 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
 
       if (error) throw error;
 
-      const videoUrl = uploadResponse.video.stored_url;
-      onVideoSelected({ type: 'file', data: videoUrl });
+      onVideoSelected({ type: 'file', data: uploadResponse.video.stored_url });
       setHasVideo(true);
       setCurrentVideoId(uploadResponse.video.id);
       
@@ -119,11 +119,12 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
       console.error('Process error:', error);
       toast({
         title: "Error",
-        description: "Failed to process video URL. Please make sure the URL is accessible.",
+        description: "Failed to process video URL",
         variant: "destructive",
       });
     } finally {
       setUploading(false);
+      setUrl("");
     }
   };
 
@@ -132,6 +133,15 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
       toast({
         title: "Error",
         description: "Please select a target language",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!currentVideoId) {
+      toast({
+        title: "Error",
+        description: "No video selected",
         variant: "destructive",
       });
       return;
@@ -192,27 +202,25 @@ export const VideoUpload = ({ onVideoSelected, selectedLanguage }: VideoUploadPr
             </TabsTrigger>
           </TabsList>
           <TabsContent value="upload" className="mt-4">
-            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg border-gray-200 hover:border-primary/50 transition-colors bg-gray-50">
-              <Video className="w-8 h-8 text-primary mb-4" />
-              <p className="text-sm text-gray-600 mb-4 text-center">
-                Click to choose a video file or drag and drop here
-              </p>
-              <Input
-                type="file"
-                accept="video/*"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="video-upload"
-              />
-              <label htmlFor="video-upload">
-                <div className="cursor-pointer">
-                  <Button size="sm" disabled={uploading} variant="secondary" className="bg-white hover:bg-gray-50">
-                    <Upload className="mr-2 h-4 w-4" />
-                    {uploading ? 'Uploading...' : 'Choose Video'}
-                  </Button>
-                </div>
-              </label>
-            </div>
+            <label htmlFor="video-upload" className="cursor-pointer block">
+              <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg border-gray-200 hover:border-primary/50 transition-colors bg-gray-50">
+                <Video className="w-8 h-8 text-primary mb-4" />
+                <p className="text-sm text-gray-600 mb-4 text-center">
+                  Click to choose a video file or drag and drop here
+                </p>
+                <Input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="video-upload"
+                />
+                <Button size="sm" disabled={uploading} variant="secondary" className="bg-white hover:bg-gray-50">
+                  <Upload className="mr-2 h-4 w-4" />
+                  {uploading ? 'Uploading...' : 'Choose Video'}
+                </Button>
+              </div>
+            </label>
           </TabsContent>
           <TabsContent value="url" className="mt-4">
             <form onSubmit={handleUrlSubmit} className="flex gap-2">
